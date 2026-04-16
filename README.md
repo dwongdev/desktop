@@ -265,7 +265,27 @@ Anyone with access to your machine account may be able to access local session d
 - `AGENTIFY_DESKTOP_CHROME_PROFILE_MODE=isolated|existing`: choose Chrome profile mode.
 - `AGENTIFY_DESKTOP_CHROME_PROFILE_NAME`: choose an existing Chrome profile name.
 
-## Development
+## Development From Source
+
+If you want the repo checkout workflow instead of the published npm package:
+
+```bash
+git clone git@github.com:agentify-sh/desktop.git
+cd desktop
+./scripts/quickstart.sh
+```
+
+Useful quickstart variants:
+
+```bash
+./scripts/quickstart.sh --show-tabs
+./scripts/quickstart.sh --foreground
+./scripts/quickstart.sh --client codex
+./scripts/quickstart.sh --client claude
+./scripts/quickstart.sh --client opencode
+./scripts/quickstart.sh --client all
+./scripts/quickstart.sh --client none
+```
 
 Install dependencies:
 
