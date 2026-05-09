@@ -67,7 +67,8 @@ export async function ensureDesktopRunning({
   fetchImpl = fetch,
   spawnImpl = spawn,
   timeoutMs = 30_000,
-  showTabs = false
+  showTabs = false,
+  platform = process.platform
 }) {
   const conn = await loadConnection({ stateDir });
   if (conn) {
@@ -83,7 +84,7 @@ export async function ensureDesktopRunning({
     __dirname,
     'node_modules',
     '.bin',
-    process.platform === 'win32' ? 'electron.cmd' : 'electron'
+    platform === 'win32' ? 'electron.cmd' : 'electron'
   );
   const entry = path.join(__dirname, 'main.mjs');
   const usingCustomSpawn = spawnImpl !== spawn;
@@ -104,7 +105,8 @@ export async function ensureDesktopRunning({
       ...process.env,
       AGENTIFY_DESKTOP_STATE_DIR: stateDir,
       ...(showTabs ? { AGENTIFY_DESKTOP_SHOW_TABS: 'true' } : {})
-    }
+    },
+    shell: platform === 'win32'
   })?.unref?.();
 
   const start = Date.now();

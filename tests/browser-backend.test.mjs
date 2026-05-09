@@ -15,7 +15,8 @@ test('browser-backend: normalizes aliases', () => {
   assert.equal(normalizeBrowserBackend('chrome'), 'chrome-cdp');
   assert.equal(normalizeBrowserBackend('cdp'), 'chrome-cdp');
   assert.equal(normalizeBrowserBackend('electron'), 'electron');
-  assert.equal(normalizeBrowserBackend('unknown'), 'electron');
+  assert.equal(normalizeBrowserBackend('unknown'), 'chrome-cdp');
+  assert.equal(normalizeBrowserBackend(''), 'chrome-cdp');
 });
 
 test('browser-backend: argv overrides env and settings', () => {

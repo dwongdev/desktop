@@ -187,10 +187,12 @@ async function resolveTab({ tabs, defaultTabId, body, url, showTabsByDefault = f
   const vendor = explicitVendor || defaultVendor(vendors);
   if (tabId) return tabId;
   if (key) {
+    const existing = (tabs.listTabs?.() || []).find((t) => t?.key === key);
+    if (existing?.id) {
+      if (explicitVendor && !listedTabMatchesVendor(existing, explicitVendor)) throw new Error('key_vendor_mismatch');
+      return existing.id;
+    }
     if (!createIfMissing) {
-      const existing = (tabs.listTabs?.() || []).find((t) => t?.key === key);
-      if (explicitVendor && existing?.id && !listedTabMatchesVendor(existing, explicitVendor)) throw new Error('key_vendor_mismatch');
-      if (existing?.id) return existing.id;
       throw new Error('tab_not_found');
     }
     return await tabs.ensureTab({

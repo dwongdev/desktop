@@ -814,6 +814,64 @@ test('http-api: query with keyed tab uses default vendor metadata when no model 
   assert.equal(ensuredArgs.url, 'https://chatgpt.com/');
 });
 
+test('http-api: query with existing keyed vendor tab does not default to ChatGPT', async (t) => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'agentify-http-existing-vendor-key-'));
+  let ensureCalls = 0;
+  const controller = {
+    runExclusive: async (fn) => await fn(),
+    query: async () => ({ text: 'ok', codeBlocks: [], meta: {} })
+  };
+  const tabs = {
+    listTabs: () => [{ id: 't-perplexity', key: 'perplexity', vendorId: 'perplexity', vendorName: 'Perplexity', url: 'https://www.perplexity.ai/' }],
+    ensureTab: async () => {
+      ensureCalls += 1;
+      return 'unexpected';
+    },
+    createTab: async () => 'unexpected',
+    closeTab: async () => true,
+    getControllerById: (id) => {
+      assert.equal(id, 't-perplexity');
+      return controller;
+    }
+  };
+  const server = await startHttpApi({
+    port: 0,
+    token: 'secret',
+    tabs,
+    defaultTabId: 't0',
+    vendors: [
+      { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/' },
+      { id: 'perplexity', name: 'Perplexity', url: 'https://www.perplexity.ai/' }
+    ],
+    serverId: 'sid-test',
+    stateDir: dir,
+    getStatus: async () => ({ ok: true })
+  });
+  t.after(() => server.close());
+  const port = server.address().port;
+
+  const reused = await req({
+    port,
+    token: 'secret',
+    method: 'POST',
+    pth: '/query',
+    body: { key: 'perplexity', prompt: 'hi' }
+  });
+  assert.equal(reused.res.status, 200);
+  assert.equal(reused.data.tabId, 't-perplexity');
+  assert.equal(ensureCalls, 0);
+
+  const mismatch = await req({
+    port,
+    token: 'secret',
+    method: 'POST',
+    pth: '/query',
+    body: { key: 'perplexity', vendorId: 'chatgpt', prompt: 'hi' }
+  });
+  assert.equal(mismatch.res.status, 409);
+  assert.equal(mismatch.data.error, 'key_vendor_mismatch');
+});
+
 test('http-api: bundle save/list/get/delete work', async (t) => {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'agentify-http-bundles-'));
   const tabs = {

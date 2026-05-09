@@ -28,7 +28,7 @@ export function settingsPath(stateDir = defaultStateDir()) {
 
 export function defaultSettings() {
   return {
-    browserBackend: 'electron',
+    browserBackend: 'chrome-cdp',
     chromeDebugPort: 9222,
     chromeExecutablePath: null,
     chromeProfileMode: 'isolated',

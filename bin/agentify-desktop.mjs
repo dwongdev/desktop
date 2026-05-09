@@ -60,7 +60,8 @@ async function runMcp(args) {
 function runGui(args) {
   const child = spawn(electronBin(), [packageRoot, ...args], {
     stdio: 'inherit',
-    env: process.env
+    env: process.env,
+    shell: process.platform === 'win32'
   });
   child.on('error', (err) => {
     console.error(`agentify-desktop failed to start: ${err.message}`);

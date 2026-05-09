@@ -551,7 +551,8 @@ export class ChromeCdpBrowserBackend {
         startUrl: 'about:blank'
       });
       this.chromeProcess = spawn(executable, args, {
-        stdio: 'ignore'
+        stdio: 'ignore',
+        shell: process.platform === 'win32'
       });
       this.chromeProcess.unref?.();
 

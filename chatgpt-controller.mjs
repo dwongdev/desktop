@@ -841,12 +841,24 @@ export class ChatGPTController {
     const assistantSel = JSON.stringify(this.selectors.assistantMessage);
     const out = await this.#eval(`(async () => {
       const nodes = Array.from(document.querySelectorAll(${assistantSel}));
-      const last = nodes[nodes.length - 1];
+      const last = nodes[nodes.length - 1] || document.querySelector('main') || document.body;
       if (!last) return [];
-      const imgs = Array.from(last.querySelectorAll('img'));
-      const canvases = Array.from(last.querySelectorAll('canvas'));
       const results = [];
-      for (const img of imgs.slice(0, ${maxImages})) {
+      const seen = new Set();
+      const push = (item) => {
+        const key = String(item.dataUrl || item.src || '');
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        results.push(item);
+      };
+      const collectRoot = (root) => Array.from(root.querySelectorAll('img')).filter((img) => {
+        const r = img.getBoundingClientRect();
+        const src = img.currentSrc || img.src || '';
+        return src && r.width >= 64 && r.height >= 64;
+      });
+      const imgs = [...collectRoot(last), ...collectRoot(document.querySelector('main') || document.body)];
+      for (const img of imgs) {
+        if (results.length >= ${maxImages}) break;
         const src = img.currentSrc || img.src || '';
         const alt = img.alt || '';
         if (!src) continue;
@@ -854,42 +866,55 @@ export class ChatGPTController {
           try {
             const r = await fetch(src);
             const b = await r.blob();
-            if (b.size > 15 * 1024 * 1024) { results.push({ src, alt }); continue; }
+            if (b.size > 15 * 1024 * 1024) { push({ src, alt }); continue; }
             const dataUrl = await new Promise((resolve, reject) => {
               const fr = new FileReader();
               fr.onerror = () => reject(new Error('file_reader_error'));
               fr.onload = () => resolve(String(fr.result || ''));
               fr.readAsDataURL(b);
             });
-            results.push({ src, alt, dataUrl });
+            push({ src, alt, dataUrl });
             continue;
           } catch {}
         }
-        results.push({ src, alt });
+        push({ src, alt });
       }
 
+      const canvases = Array.from(last.querySelectorAll('canvas'));
       for (let i = 0; i < canvases.length && results.length < ${maxImages}; i++) {
         const c = canvases[i];
         try {
           const dataUrl = c.toDataURL('image/png');
           if (dataUrl && dataUrl.startsWith('data:image/')) {
-            results.push({ src: 'canvas:' + (i + 1), alt: 'canvas', dataUrl });
+            push({ src: 'canvas:' + (i + 1), alt: 'canvas', dataUrl });
           }
         } catch {}
       }
 
-      // Background-image urls (rare but possible)
       if (results.length < ${maxImages}) {
-        const bgEls = Array.from(last.querySelectorAll('*')).filter(el => {
+        const bgEls = Array.from((document.querySelector('main') || last).querySelectorAll('*')).filter(el => {
           const s = getComputedStyle(el);
-          return s && s.backgroundImage && s.backgroundImage.includes('url(');
+          const r = el.getBoundingClientRect();
+          return s && s.backgroundImage && s.backgroundImage.includes('url(') && r.width >= 64 && r.height >= 64;
         }).slice(0, 50);
         for (const el of bgEls) {
           if (results.length >= ${maxImages}) break;
           const s = getComputedStyle(el).backgroundImage || '';
           const m = s.match(/url\\([\"']?([^\"')]+)[\"']?\\)/i);
           const src = m?.[1] || '';
-          if (src && (src.startsWith('http://') || src.startsWith('https://'))) results.push({ src, alt: 'background-image' });
+          if (src && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('blob:'))) push({ src, alt: 'background-image' });
+        }
+      }
+
+      if (results.length < ${maxImages}) {
+        const links = Array.from(document.querySelectorAll('a[href]')).filter((a) => {
+          const href = String(a.href || '');
+          return /\\.(png|jpe?g|webp)(\\?|#|$)/i.test(href) || /download|image|generated/i.test((a.textContent || '') + ' ' + (a.getAttribute('aria-label') || ''));
+        });
+        for (const a of links) {
+          if (results.length >= ${maxImages}) break;
+          const src = String(a.href || '');
+          if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('blob:')) push({ src, alt: (a.textContent || '').trim() || 'link' });
         }
       }
       return results;
@@ -927,7 +952,7 @@ export class ChatGPTController {
 
       const ext =
         mime?.includes('png') ? 'png' : mime?.includes('jpeg') || mime?.includes('jpg') ? 'jpg' : mime?.includes('webp') ? 'webp' : 'bin';
-      const name = `chatgpt-${Date.now()}-${String(i + 1).padStart(2, '0')}.${ext}`;
+      const name = `agentify-${Date.now()}-${String(i + 1).padStart(2, '0')}.${ext}`;
       const file = path.join(outDir, name);
       await fs.writeFile(file, buf);
       saved.push({ path: file, alt: img.alt || '', mime: mime || null, source: img.src || null });
