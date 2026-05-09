@@ -31,7 +31,7 @@ test('state: writeToken overrides existing', async () => {
 test('state: normalizeSettings defaults allowAuthPopups to true', () => {
   const s = normalizeSettings({});
   assert.equal(s.allowAuthPopups, true);
-  assert.equal(s.browserBackend, 'electron');
+  assert.equal(s.browserBackend, 'chrome-cdp');
   assert.equal(s.chromeDebugPort, 9222);
   assert.equal(s.chromeProfileMode, 'isolated');
   assert.equal(s.chromeProfileName, 'Default');

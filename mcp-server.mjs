@@ -31,13 +31,13 @@ registerTool(
   'agentify_query',
   {
     description:
-      'Send a prompt to the local Agentify Desktop session (ChatGPT web) and return the latest assistant response. If a CAPTCHA/login challenge appears, the desktop window will ask for user intervention and resume automatically.',
+      'Send a prompt to a local Agentify Desktop browser session and return the latest assistant response. If a CAPTCHA/login challenge appears, the browser window will ask for user intervention and resume automatically.',
     inputSchema: {
       model: z.string().optional().describe('Target model/provider hint (e.g., "chatgpt").'),
       tabId: z.string().optional().describe('Tab/session id to use (for parallel jobs).'),
       key: z.string().optional().describe('Stable tab key (e.g., project name); creates a tab if missing.'),
       bundleName: z.string().optional().describe('Named context bundle to merge into this query before sending.'),
-      prompt: z.string().describe('Prompt to send to ChatGPT.'),
+      prompt: z.string().describe('Prompt to send to the selected AI web UI.'),
       promptPrefix: z.string().optional().describe('Optional reusable instruction block prepended before packed context and prompt.'),
       attachments: z.array(z.string()).optional().describe('Local file paths to upload before sending the prompt.'),
       contextPaths: z.array(z.string()).optional().describe('Local files/folders to pack into the prompt and/or attach automatically.'),
@@ -247,12 +247,12 @@ registerTool(
   'agentify_image_gen',
   {
     description:
-      'Generate images via ChatGPT web UI (best-effort): sends the prompt, then downloads any images from the latest assistant message to a local folder and returns file paths.',
+      'Generate images via the selected AI web UI (best-effort): sends the prompt, then downloads images from the page to a local folder and returns file paths.',
     inputSchema: {
       model: z.string().optional().describe('Target model/provider hint (e.g., "chatgpt").'),
       tabId: z.string().optional().describe('Tab/session id to use.'),
       key: z.string().optional().describe('Stable tab key; creates a tab if missing.'),
-      prompt: z.string().describe('Prompt to send to ChatGPT for image generation.'),
+      prompt: z.string().describe('Prompt to send for image generation.'),
       timeoutMs: z.number().optional().describe('Maximum time to wait for completion.'),
       maxImages: z.number().optional().describe('Maximum images to download.')
     }

@@ -223,13 +223,13 @@ The tool result includes `packedContextSummary` so you can see what was included
 
 Agentify Desktop supports two browser backends:
 
-- `electron`: embedded windows managed by Agentify Desktop. This is the default.
-- `chrome-cdp`: launches or attaches to a Chrome-family browser over Chrome DevTools Protocol.
+- `chrome-cdp`: launches or attaches to a Chrome-family browser over Chrome DevTools Protocol. This is the default and recommended backend.
+- `electron`: embedded windows managed by Agentify Desktop. Use this only as an explicit fallback.
 
-Use Chrome CDP when SSO providers fight embedded Electron login:
+Chrome CDP is the default because SSO providers commonly block embedded Electron login:
 
 ```bash
-AGENTIFY_DESKTOP_BROWSER_BACKEND=chrome-cdp npx @agentify/desktop
+npx @agentify/desktop
 ```
 
 Optional Chrome CDP settings:
@@ -243,6 +243,7 @@ You can also pass GUI flags:
 
 ```bash
 npx @agentify/desktop gui --browser-backend chrome-cdp
+npx @agentify/desktop gui --browser-backend electron
 npx @agentify/desktop gui --chrome-debug-port 9333
 ```
 

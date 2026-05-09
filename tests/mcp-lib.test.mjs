@@ -104,6 +104,31 @@ test('mcp-lib: ensureDesktopRunning spawns if serverId mismatches and then recov
   assert.equal(conn.serverId, 'sid-new');
 });
 
+test('mcp-lib: Windows spawn uses shell for electron.cmd', async () => {
+  const dir = await tempDir();
+  const token = 't';
+  await ensureToken(dir);
+  await fs.writeFile(path.join(dir, 'token.txt'), `${token}\n`, 'utf8');
+  await writeState({ ok: true, port: 12345, serverId: 'sid-old' }, dir);
+
+  let fetchServerId = 'sid-wrong';
+  let sawShell = false;
+  const conn = await ensureDesktopRunning({
+    stateDir: dir,
+    fetchImpl: makeFetch({ getServerId: () => fetchServerId, acceptToken: token }),
+    platform: 'win32',
+    spawnImpl: (_cmd, _args, opts) => {
+      sawShell = opts?.shell === true;
+      fetchServerId = 'sid-new';
+      void writeState({ ok: true, port: 12345, serverId: 'sid-new' }, dir);
+      return { unref() {} };
+    },
+    timeoutMs: 3000
+  });
+  assert.equal(conn.serverId, 'sid-new');
+  assert.equal(sawShell, true);
+});
+
 test('mcp-lib: ensureDesktopRunning resolves bundled electron relative to desktop package, not cwd', async () => {
   const dir = await tempDir();
   const token = 't';

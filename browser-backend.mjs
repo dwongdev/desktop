@@ -1,11 +1,11 @@
-export const SUPPORTED_BROWSER_BACKENDS = ['electron', 'chrome-cdp'];
+export const SUPPORTED_BROWSER_BACKENDS = ['chrome-cdp', 'electron'];
 
 export function normalizeBrowserBackend(value) {
   const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return 'electron';
+  if (!raw) return 'chrome-cdp';
   if (raw === 'chrome' || raw === 'chrome_cdp' || raw === 'cdp') return 'chrome-cdp';
   if (SUPPORTED_BROWSER_BACKENDS.includes(raw)) return raw;
-  return 'electron';
+  return 'chrome-cdp';
 }
 
 export function resolveBrowserBackend({
